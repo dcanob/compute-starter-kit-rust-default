@@ -8,9 +8,15 @@ manifest_version = 2
 name = "Default starter for Rust"
 service_id = "qk7qluLoJRpggi0XNr5694"
 
+[local_server]
+    [local_server.backends]
+        [local_server.backends.mioriente]
+            override_host = "mioriente-new.sindyk.com"
+            url = "http://35.199.15.132:80"
+
 [setup]
-    [backends]
-        [setup.backends.content_backend]
+    [setup.backends]
+        [setup.backends.mioriente]
             override_host = "mioriente-new.sindyk.com"
             address = "35.199.15.132"
             port = 80

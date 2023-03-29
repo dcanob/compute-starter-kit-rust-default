@@ -4,7 +4,7 @@ use fastly::http::{header, Method, StatusCode};
 use fastly::{mime, Error, Request, Response};
 
 // Define a constant for the backend name:
-const BACKEND_NAME: &str = "content_backend";
+const BACKEND_NAME: &str = "mioriente";
 
 /// The entry point for your application.
 ///
@@ -15,7 +15,7 @@ const BACKEND_NAME: &str = "content_backend";
 /// If `main` returns an error, a 500 error response will be delivered to the client.
 
 #[fastly::main]
-fn main(req: Request) -> Result<Response, Error> {
+fn main(mut req: Request) -> Result<Response, Error> {
     // Log service version
     println!(
         "FASTLY_SERVICE_VERSION: {}",
@@ -72,15 +72,22 @@ fn main(req: Request) -> Result<Response, Error> {
 
         // Catch all other requests and return a 404.
         _ => {
-            let bereq = req.clone_without_body();
-            let mut beresp = bereq.send(BACKEND_NAME)?;
-
-            let original_path = req.get_path().to_owned();
-
-            if original_path.contains("/js/") | original_path.contains("/css/") {
-                beresp.set_header("X-Compress-Hint", "on");
+            println!("Request received for path {}", req.get_path());
+            req.set_header(header::HOST, "mioriente-new.sindyk.com");
+            if req.get_path().to_owned().contains("/js/")
+                | req.get_path().to_owned().contains("/css/")
+                | req.get_path().to_owned().contains("/images/")
+                | req.get_path().to_owned().contains("/fonts/")
+                | req.get_path().to_owned().contains(".js")
+                | req.get_path().to_owned().contains(".css")
+                | req.get_path().to_owned().contains(".json")
+            {
+                req.set_ttl(60 * 60 * 24 * 30);
+                req.set_header("X-Compress-Hint", "on");
+            } else {
+                req.set_ttl(60 * 60 * 24);
             }
-            Ok(beresp)
+            Ok(req.send(BACKEND_NAME)?)
         }
     }
 }
