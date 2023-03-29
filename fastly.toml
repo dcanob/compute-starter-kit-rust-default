@@ -7,3 +7,10 @@ language = "rust"
 manifest_version = 2
 name = "Default starter for Rust"
 service_id = "qk7qluLoJRpggi0XNr5694"
+
+[setup]
+    [backends]
+        [setup.backends.content_backend]
+            override_host = "mioriente-new.sindyk.com"
+            address = "35.199.15.132"
+            port = 80

@@ -3,6 +3,9 @@
 use fastly::http::{header, Method, StatusCode};
 use fastly::{mime, Error, Request, Response};
 
+// Define a constant for the backend name:
+const BACKEND_NAME: &str = "content_backend";
+
 /// The entry point for your application.
 ///
 /// This function is triggered when your service receives a client request. It could be used to
@@ -26,7 +29,7 @@ fn main(req: Request) -> Result<Response, Error> {
             return Ok(Response::from_status(StatusCode::METHOD_NOT_ALLOWED)
                 .with_header(header::ALLOW, "GET, HEAD, PURGE")
                 .with_body_text_plain("This method is not allowed\n"))
-        } 
+        }
 
         // Let any other requests through
         _ => (),
@@ -68,7 +71,16 @@ fn main(req: Request) -> Result<Response, Error> {
         }
 
         // Catch all other requests and return a 404.
-        _ => Ok(Response::from_status(StatusCode::NOT_FOUND)
-            .with_body_text_plain("The page you requested could not be found\n")),
+        _ => {
+            let bereq = req.clone_without_body();
+            let mut beresp = bereq.send(BACKEND_NAME)?;
+
+            let original_path = req.get_path().to_owned();
+
+            if original_path.contains("/js/") | original_path.contains("/css/") {
+                beresp.set_header("X-Compress-Hint", "on");
+            }
+            Ok(beresp)
+        }
     }
 }
